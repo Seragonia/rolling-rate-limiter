@@ -9,6 +9,7 @@
     "lib"
   ],
   "scripts": {
+    "prepare": "tsc",
     "build": "tsc",
     "ci": "act",
     "lint": "eslint --fix",
