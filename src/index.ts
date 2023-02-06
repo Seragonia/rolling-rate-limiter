@@ -62,7 +62,7 @@ export class RateLimiter {
   async wouldLimitWithInfo(id: Id): Promise<RateLimitInfo> {
     const existingTimestamps = await this.getTimestamps(id, false);
     const currentTimestamp = getCurrentMicroseconds();
-    return this.calculateInfo([...existingTimestamps, currentTimestamp]);
+    return this.calculateInfo([...existingTimestamps, currentTimestamp], true);
   }
 
   /**
@@ -101,7 +101,7 @@ export class RateLimiter {
    * Given a list of timestamps, computes the RateLimitingInfo. The last item in the list is the
    * timestamp of the current action.
    */
-  private calculateInfo(timestamps: Array<Microseconds>): RateLimitInfo {
+  private calculateInfo(timestamps: Array<Microseconds>, isWould = false): RateLimitInfo {
     const numTimestamps = timestamps.length;
     const currentTimestamp = timestamps[numTimestamps - 1];
     const previousTimestamp = timestamps[numTimestamps - 2];
@@ -131,6 +131,17 @@ export class RateLimiter {
       this.minDifference,
       microsecondsUntilUnblocked,
     ) as Microseconds;
+
+	
+	if (isWould) {
+		return {
+			blocked,
+			blockedDueToCount,
+			blockedDueToMinDifference,
+			millisecondsUntilAllowed: microsecondsToMilliseconds((timestamps[Math.max(0, numTimestamps - this.maxInInterval)] as number) - (currentTimestamp as number) + (this.interval as number) as Microseconds),
+			actionsRemaining: Math.max(0, this.maxInInterval - numTimestamps),
+		};
+	}
 
     return {
       blocked,
